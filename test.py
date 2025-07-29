@@ -6,5 +6,10 @@ app = Flask(__name__)
 def index():
     return render_template("index.html")
 
-if __name__ == '__main__':
-    app.run(debug=True)
+
+
+# 해당 method를 실행하여 서버를 시작합니다.
+def start_server(): 
+    app.run(host='0.0.0.0', port=5000, debug=False)
+
+# push 요청...
