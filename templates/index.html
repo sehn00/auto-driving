@@ -1,11 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Flask 정적파일 예제</title>
+    <meta charset="UTF-8">
+    <title>자율주행 경진대회 웹서버</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        async function updateStatus(){
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                document.getElementById('status').textContent = data.status;
+                document.getElementById('angle').textContent = data.angle;
+            } catch (error) {
+                console.error('상태 정보를 가져오는 데 실패했습니다:', error);
+            }
+        }
+
+        setInterval(updateStatus, 3000);  // 3초마다 상태 갱신
+        window.onload = updateStatus;     // 처음 로딩 시 갱신
+    </script>
 </head>
 <body>
     <h1>📄 CSS와 이미지 불러오기</h1>
     <img src="{{ url_for('static', filename='images/test_image.jfif') }}" alt="Car Image" width="300">
+
+    <hr>
+
+    <h2>🚗 자율주행 상태 정보</h2>
+    <p>📡 현재 상태: <strong id="status">Loading...</strong></p>
+    <p>📐 현재 조향각: <strong id="angle">Loading...</strong></p>
+
+    <hr>
+
+    <h2>📹 실시간 차량 카메라 스트리밍</h2>
+    <img src="{{ url_for('video_feed') }}" width="640" height="480" alt="Live Camera Feed">
+
 </body>
 </html>

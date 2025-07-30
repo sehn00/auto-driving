@@ -1,5 +1,4 @@
 # Flask 서버 사용을 위함
-
 from flask import Flask, render_template, Response
 import cv2
 from runtime import camera  # Pi Camera
@@ -8,9 +7,9 @@ from runtime.config import Status
 app = Flask(__name__) # Flask 웹 서버 인스턴스를 생성
 
 # 서버 상태 저장용 전역 변수
-current_frame = None
-current_status = Status.go
-current_angle = 90
+#current_frame = None
+#current_status = Status.go
+#current_angle = 90
 
 def generate_video():
     global current_frame
