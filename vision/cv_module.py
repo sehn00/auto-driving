@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-lower_white= np.array([0,0,150])
+lower_white= np.array([0,0,120])
 upper_white = np.array([180,50,255])
 vertices = np.array([[ # 마스킹할 영역을 정의
     (100, 480),        # 좌하
@@ -23,10 +23,10 @@ def ROI(frame, vertices): # ROI를 설정
 
     return masked_frame    
 
-def warp_image(image, vertices, dst_size=(640, 480)):
+def warp_image(image, srt_pts, dst_size=(640, 480)):
     width, height = dst_size
     dst_pts = np.array([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], dtype=np.float32)
-    M = cv2.getPerspectiveTransform(vertices, dst_pts)
+    M = cv2.getPerspectiveTransform(srt_pts, dst_pts)
     warped = cv2.warpPerspective(image, M, dst_size)
     return warped
 
@@ -43,7 +43,7 @@ def pre_image(frame) :
     return edges
 
 
-def get_center(edges, y=390):
+def get_center(edges, y=380):
     height, width = edges.shape
 
     if y >= height:
@@ -58,4 +58,4 @@ def get_center(edges, y=390):
     # 중심 x 좌표 계산
     center_x = int(np.mean(white_x_indices))
     result_x = center_x - 320
-    return center_x, result_x
+    return result_x
