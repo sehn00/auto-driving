@@ -18,6 +18,7 @@ server_thread.start()
 try :
     while True :
         start_time = time.time()
+
         frame = runtime.camera.get_image()
         runtime.flask_server.current_frame = frame
         end_time = time.time()

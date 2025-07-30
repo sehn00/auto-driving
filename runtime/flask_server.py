@@ -37,7 +37,7 @@ def generate_original():
         if not ret:
             continue
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')    
+            b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')     
 
 def generate_processed():
     global processed_frame
@@ -48,7 +48,7 @@ def generate_processed():
         if not ret:
             continue
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
+            b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
 
 
 # 외부에서 상태 업데이트 가능하게
