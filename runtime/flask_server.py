@@ -7,6 +7,7 @@ app = Flask(__name__)
 current_status = "init"
 current_angle = 90
 current_frame = None
+processed_frame = None          # 전처리된 이미지
 
 @app.route('/')
 def index():
@@ -19,11 +20,15 @@ def status():
         'angle': current_angle
     }
     
-@app.route('/video_feed')
-def video_feed():
-    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')    
+@app.route('/origin_feed')
+def origin_feed():
+    return Response(generate_original(), mimetype='multipart/x-mixed-replace; boundary=frame')    
 
-def generate():
+@app.route('/processed_feed')
+def processed_feed():
+    return Response(generate_processed(), mimetype='multipart/x-mixed-replace; boundary=frame')    
+
+def generate_original():
     global current_frame
     while True:
         if current_frame is None:
@@ -33,6 +38,18 @@ def generate():
             continue
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')    
+
+def generate_processed():
+    global processed_frame
+    while True:
+        if processed_frame is None:
+            continue
+        ret, jpeg = cv2.imencode('.jpg', processed_frame)
+        if not ret:
+            continue
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
+
 
 # 외부에서 상태 업데이트 가능하게
 def update_state(status, angle):

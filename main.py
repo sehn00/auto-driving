@@ -1,10 +1,10 @@
 import runtime 
 import threading # Flask 서버를 백그라운드에서 실행하기 위한 쓰레드
 import time
-
+import vision
 # main을 위한 초기화
 runtime.gpio.init()
-runtime.camera.init(640,480,30)
+runtime.camera.init(640,480,5) # 일단 5FPS로 설정
 runtime.gpio.led(False, False)
 
 # 변수 선언
@@ -17,10 +17,27 @@ server_thread.start()
 
 try :
     while True :
-        print("서버 확인 중")
+        start_time = time.time()
+        frame = runtime.camera.get_image()
+        runtime.flask_server.current_frame = frame
+        end_time = time.time()
+        print(f"⏱️ frame load 실행 시간: {end_time - start_time:.4f}초")
         
+        start_time = time.time()
+        pre_frame = vision.cv_module.pre_image(frame)
+        runtime.flask_server.processed_frame = pre_frame
+        end_time = time.time()
+        print(f"⏱️ frame process 실행 시간: {end_time - start_time:.4f}초")        
         
-        
+        start_time = time.time()
+        center, result_x = vision.cv_module.get_center(pre_frame)
+        end_time = time.time()
+        print(f"{center:.4f}")
+        print(f"⏱️ center 계산 실행 시간: {end_time - start_time:.4f}초")       
+
+        # start_time = time.time() # 만약 center_x가 280이면 result_x = -40 이때, 좌회전을 해야함.
+                
+
 except KeyboardInterrupt: 
     print("사용자 종료")
 
