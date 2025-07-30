@@ -1,7 +1,7 @@
 from flask import Flask, render_template, Response
 from runtime import camera
 import cv2
-app = Flask(__name__)
+app = Flask(__name__, template_folder="../templates")
 
 # 전역 변수 초기화
 current_status = "init"
@@ -37,7 +37,7 @@ def generate_original():
         if not ret:
             continue
         yield (b'--frame\r\n'
-            b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')     
+            b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')    
 
 def generate_processed():
     global processed_frame
