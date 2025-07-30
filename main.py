@@ -17,11 +17,28 @@ server_thread.start()
 
 try :
     while True :
+<<<<<<< HEAD
         start_time = time.time()
         frame = runtime.camera.get_image()
         runtime.flask_server.current_frame = frame
         end_time = time.time()
         print(f"⏱️ frame load 실행 시간: {end_time - start_time:.4f}초")
+=======
+        frame = runtime.camera.get_image() # 이미지를 받아옴
+        runtime.flask_server.current_frame = frame # 해당 파일에 current_frame을 지금 사진으로 변경하면 웹서버에 반영됨
+
+        roi_frame = vision.cv_module.ROI(frame)
+        warp_frame = vision.cv_module.warp_image(roi_frame)
+        pre_frame = vision.cv_module.pre_image(warp_frame)
+        runtime.flask_server.processed_frame = pre_frame
+
+
+        center, result_x = vision.cv_module.get_center(pre_frame)
+        end_time = time.time()
+
+
+        
+>>>>>>> heo
         
         start_time = time.time()
         pre_frame = vision.cv_module.pre_image(frame)
