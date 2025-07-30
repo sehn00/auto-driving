@@ -54,8 +54,6 @@ def pre_image(frame) :
     edges = cv2.Canny(morphed, 40, 120)
     return edges
 
-def get_center(edges, y=390):   # 차선 중심 위치 반환
-
 def get_center(edges, y=380):
     height, width = edges.shape
 
