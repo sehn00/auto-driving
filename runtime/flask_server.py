@@ -6,6 +6,7 @@ app = Flask(__name__)
 # 전역 변수 초기화
 current_status = "init"
 current_angle = 90
+current_frame = None
 
 @app.route('/')
 def index():
@@ -18,21 +19,21 @@ def status():
         'angle': current_angle
     }
     
-def generate():
-    while True:
-        frame = camera.get_image()
-        current_frame = frame
-        ret, jpeg = cv2.imencode('.jpg', current_frame) # JPEG로 인코딩
-        if not ret:
-            continue        
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')    
-    
-
 @app.route('/video_feed')
 def video_feed():
-    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
-    
+    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')    
+
+def generate():
+    global current_frame
+    while True:
+        if current_frame is None:
+            continue
+        ret, jpeg = cv2.imencode('.jpg', current_frame)
+        if not ret:
+            continue
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')    
+
 # 외부에서 상태 업데이트 가능하게
 def update_state(status, angle):
     global current_status, current_angle
