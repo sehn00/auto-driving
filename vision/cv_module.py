@@ -42,17 +42,13 @@ def pre_image(frame):
     morphed = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel) # 모폴로지 연산
     edges = cv2.Canny(morphed, 40, 120) # Canny Edge 검출
     return edges 
-def pre_image(frame) :
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(hsv, lower_white, upper_white)
-    mask_white = cv2.bitwise_and(frame, frame, mask=mask)
-    gray = cv2.cvtColor(mask_white, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (5,5), 0)
-    _, binary = cv2.threshold(blur, 120, 255, cv2.THRESH_BINARY)
-    kernel = np.ones((5, 5), np.uint8)
-    morphed = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
-    edges = cv2.Canny(morphed, 40, 120)
-    return edges
+
+def origin_to_gray(frame) :
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)    # BGR -> HSV
+    mask = cv2.inRange(hsv, lower_white, upper_white)   # 흰색범위 지정한 마스크 생성
+    mask_white = cv2.bitwise_and(frame, frame, mask=mask)   # 원본 이미지에 마스크 적용, 흰색 영역만 남김
+    gray = cv2.cvtColor(mask_white, cv2.COLOR_BGR2GRAY) # 그레이스케일
+    return gray
 
 def get_center(edges, y=380):
     height, width = edges.shape
