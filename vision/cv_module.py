@@ -1,23 +1,8 @@
-# 차선 인식을 위한 영상 전처리 및 중심좌표 계산
-
 import cv2
-from networkx import edges
 import numpy as np
 
 lower_white= np.array([0,0,120])
 upper_white = np.array([180,50,255])
-vertices = np.array([[ # 마스킹할 영역을 정의
-    (100, 480),        # 좌하
-    (280, 300),               # 좌상
-    (360, 300),               # 우상
-    (540, 480)]], dtype=np.int32) # 우하
-
-def warp_image(image, srt_pts, dst_size=(640, 480)):    # 버드아이뷰
-    width, height = dst_size
-    dst_pts = np.array([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], dtype=np.float32)
-    M = cv2.getPerspectiveTransform(srt_pts, dst_pts)
-    warped = cv2.warpPerspective(image, M, dst_size)
-    return warped
 
 def origin_to_gray(frame) :
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)    # BGR -> HSV
