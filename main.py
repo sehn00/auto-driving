@@ -15,10 +15,10 @@ server_thread = threading.Thread(target=runtime.flask_server.start_server, daemo
 server_thread.start()
 
 # 변수 초기화
-current_action = None
+#current_action = None
 
-yolo_thread = threading.Thread(target=vision.cnn.yolo_inference_loop, daemon=True)
-yolo_thread.start()
+#yolo_thread = threading.Thread(target=vision.cnn.yolo_inference_loop, daemon=True)
+#yolo_thread.start()
 
 try :
     while True :
@@ -31,9 +31,14 @@ try :
         pre_frame = vision.cv_module.draw_lines(canny, lines) # 실제 주행에서는 사용 X
         runtime.flask_server.processed_frame = pre_frame # 전치리된 이미지를 웹서버에 반영
 
-        with action_lock:
-            current_action = shared_action
-                                
+        result_x = vision.cv_module.get_center_from_lines(lines, 380) # y = 380에서 중심 좌표를 구함
+        center = vision.cv_module.get_motor_angle(result_x)
+        runtime.gpio.motor(50, 1, 1) # 아직 후진코드 작성 X
+        runtime.gpio.servo(center)
+        time.sleep(0.1)        
+#        with action_lock:
+#            current_action = shared_action
+"""                                
         match current_action:
             case "stop":
                 runtime.gpio.motor(0, 1, 1)
@@ -55,7 +60,7 @@ try :
                 runtime.gpio.motor(50, 1, 1) # 아직 후진코드 작성 X
                 runtime.gpio.servo(center)
                 time.sleep(0.1)
-                
+"""                
 except KeyboardInterrupt: 
     print("사용자 종료")
 

@@ -8,7 +8,7 @@ from runtime.config import YOLO_label, action_lock, shared_action
 current_dir = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(current_dir, "best.pt")
 model = YOLO(model_path) # 이 YOLO 모델을 학습 시킬 예정 main에서 vision을 import 시 자동으로 모델이 로드되게 설정
-
+# vision/best.pt 로 파일을 저장할 것
 
 def detect_class_id(frame):
     try:
