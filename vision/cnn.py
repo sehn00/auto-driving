@@ -6,7 +6,7 @@ import runtime
 from runtime.config import YOLO_label, action_lock, shared_action
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(current_dir, "best.pt")
+model_path = os.path.join(current_dir, "yolo11n.pt") # 일단 기존 모델을 사용
 model = YOLO(model_path) # 이 YOLO 모델을 학습 시킬 예정 main에서 vision을 import 시 자동으로 모델이 로드되게 설정
 # vision/best.pt 로 파일을 저장할 것
 
@@ -37,16 +37,12 @@ def yolo_inference_loop():
         detected_cls_ids = detect_class_id(frame)
         action = None
 
-        if YOLO_label.stop in detected_cls_ids:
+        if 11 in detected_cls_ids:
             action = "stop"
-        elif YOLO_label.car in detected_cls_ids:
+        elif 2 in detected_cls_ids:
             action = "avoid"
-        elif YOLO_label.traffic_light in detected_cls_ids:
+        elif 9 in detected_cls_ids:
             action = "traffic_light"        
-        elif YOLO_label.right in detected_cls_ids:
-            action = "right"
-        elif YOLO_label.left in detected_cls_ids:
-            action = "left"
         else:
             action = None
 
