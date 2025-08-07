@@ -22,13 +22,14 @@ def edges_to_lines(edges, minLineLength=30, maxLineGap=30):
     lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=80, minLineLength=minLineLength, maxLineGap=maxLineGap)
     return lines
 
-def draw_lines(frame, lines, color = (0,255,0), thickness=2):
-    hough_img = np.zeros_like(frame)
+def draw_lines(edges, lines, color = (0,255,0), thickness=2):
+    pre_frame = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
     if lines is not None:
         for line in lines:
             x1, y1, x2, y2 = line[0]
-            cv2.line(hough_img, (x1,y1),(x2,y2), color, thickness)
-    return hough_img
+            cv2.line(pre_frame, (x1, y1), (x2, y2), (0,255,0), 2)
+
+    return pre_frame
 
 def get_center_from_lines(lines, y=380):
     if lines is None or len(lines) == 0:
@@ -49,6 +50,7 @@ def get_center_from_lines(lines, y=380):
         center_x = int(np.mean(x_candidates))
         return center_x
     else:
+        print(" y = 380에서 선분을 찾지 못했습니다.")
         return 320
 
 def get_motor_angle(center_x, img_width=640): # 아직, PID로 변환하는 과정은 없음

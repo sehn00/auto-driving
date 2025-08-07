@@ -12,7 +12,7 @@ if frame is None:
 # 트랙바/창 생성 (lower_white, upper_white, binary)
 cv2.namedWindow('lower_white')
 cv2.namedWindow('upper_white')
-cv2.createTrackbar('lower_S', 'lower_white', 0, 255, lamb`da x: None)
+cv2.createTrackbar('lower_S', 'lower_white', 0, 255, lambda x: None)
 cv2.createTrackbar('lower_V', 'lower_white', 180, 255, lambda x: None)
 cv2.createTrackbar('upper_S', 'upper_white', 28, 255, lambda x: None)
 
@@ -66,7 +66,7 @@ while True:
     original_with_lines = frame.copy()
     if lines is not None:
         for line in lines:
-            x1, y1, x2, y2 = line[0]
+            x1, y1, x2, y2 = line[0]   
             cv2.line(original_with_lines, (x1, y1), (x2, y2), (0,255,0), 2)
 
     # (3) processed_frame(엣지에 허프 라인 그리기)
