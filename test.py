@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # 이미지 파일 경로
-image_path = 'C:\\Users\\HeoYun\\Desktop\\auto_driving\\image_of_dot.PNG'
+image_path = 'C:\\Users\\HeoYun\\Desktop\\auto_driving\\image_of_test.PNG'
 frame = cv2.imread(image_path)
 frame = cv2.resize(frame, (640, 480))
 if frame is None:
