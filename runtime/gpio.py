@@ -1,6 +1,6 @@
 # gpio.py
 
-import lgpio
+import lgpio    # Windows나 WSL에서는 지원되지않음, only RPi용  -> 경고밑줄 무시하기
 import atexit
 from ._gpio_pins import PINS # runtime/_gpio_pins.py에서 정의한 핀 번호들을 가져옴
 # Create global lgpio instance
