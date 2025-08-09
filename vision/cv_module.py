@@ -60,16 +60,16 @@ def draw_lines(frame, lines, color = (0,255,0), thickness=2):
             cv2.line(hough_img, (x1,y1),(x2,y2), color, thickness)
     return hough_img
 
-def get_center_from_lines(lines, y=380):
+def get_center_from_lines(lines, y=190):
     if lines is None or len(lines) == 0:
         return None
 
     x_candidates = []
-    for line in lines:
-        x1, y1, x2, y2 = line[0]
+    # ✅ N×1×4 또는 N×4 형태 모두 안전하게 처리
+    for x1, y1, x2, y2 in lines.reshape(-1, 4):
         # y를 선분이 통과하면
         if (y1 - y) * (y2 - y) <= 0:
-            if y2 != y1:
+            if y2 != y1:  # 기울어진 선
                 x_at_y = x1 + (y - y1) * (x2 - x1) / (y2 - y1)
                 x_candidates.append(int(x_at_y))
             elif y1 == y2 == y:  # 수평선
@@ -79,7 +79,7 @@ def get_center_from_lines(lines, y=380):
         center_x = int(np.mean(x_candidates))
         return center_x
     else:
-        return 320
+        return 320  # 후보가 없을 경우 중앙값 기본 반환
 
 def get_motor_angle(center_x, img_width=640): # 아직, PID로 변환하는 과정은 없음
     # x좌표를 0~180도로 매핑

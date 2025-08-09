@@ -6,8 +6,7 @@ import threading
 import time
 import vision
 import numpy as np
-import keyboard
-
+import sys, termios, tty, select
 # main을 위한 초기화
 runtime.gpio.init()
 runtime.gpio.servo(90)
@@ -30,12 +29,16 @@ time.sleep(3)
 
 config.shared_action = None
 
-def set_action(val):
-    with config.action_lock:
-        config.shared_action = val
-    print(f"acation = {val}")
+# --- 터미널 모드 설정 (프로그램 시작 직후) ---
+fd = sys.stdin.fileno()
+old_term_attr = termios.tcgetattr(fd)
+tty.setcbreak(fd)  # ✅ 엔터 없이 1글자씩 즉시 읽기
 
-
+def get_key():
+    dr, _, _ = select.select([sys.stdin], [], [], 0)
+    if dr:
+        return sys.stdin.read(1)
+    return None
 
 try :
     while True :
@@ -44,10 +47,11 @@ try :
         runtime.flask_server.current_frame = frame
 
         # 1-plus 과정: BEV -> 이것을 좀 조정하면 좋을듯
-        bev = vision.cv_module.origin_to_bev(frame)
-        
+        #bev = vision.cv_module.origin_to_bev(frame)
+        frame = frame[frame.shape[0]//2:, :]
+
         # 2번 과정: 프레임을 그레이스케일로 변환
-        gray = vision.cv_module.origin_to_gray(bev, lower_white=np.array([0,0,180]), upper_white=np.array([180,28,255]))
+        gray = vision.cv_module.origin_to_gray(frame, lower_white=np.array([0,0,180]), upper_white=np.array([180,28,255]))
 
         # 3번 과정: 그레이스케일에서 canny 엣지 검출     
         canny = vision.cv_module.gray_to_canny(gray, threshold=175)
@@ -60,47 +64,54 @@ try :
         runtime.flask_server.processed_frame = canny
 
         # 5번 과정: canny로부터 중심과 대응하는 각도를 얻음
-        get_center_from_canny = vision.cv_module.get_center_from_canny(canny, y = 300)
-        angle = vision.cv_module.get_motor_angle(get_center_from_canny, 640)
+        get_center_from_lines = vision.cv_module.get_center_from_lines(canny, y = 190)
+        angle = vision.cv_module.get_motor_angle(get_center_from_lines, 640)
+        print("center: ", get_center_from_lines)
         print('angle: ', angle)
         
         # 6번 과정: YOLO_thread로 처리한 상태를 읽음
 #        with config.action_lock:
 #            action = config.shared_action   # YOLO 쓰레드가 쓴 최신값을 읽음
         # 현재는 가상 상태 -> 상태를 결정
-        keyboard.on_press_key('a', lambda e: set_action("avoid_left"))
-        keyboard.on_press_key('b', lambda e: set_action("avoid_right"))        
-        keyboard.on_press_key('s', lambda e: set_action("stop"))
-        keyboard.on_press_key('t', lambda e: set_action("traffic_light"))
-        keyboard.on_press_key('l', lambda e: set_action("left"))
-        keyboard.on_press_key('r', lambda e: set_action("right"))
-        keyboard.on_press_key('q', lambda e: set_action(None))
+        # ✅ 키 1글자 즉시 읽기
+        key = get_key()
+        if key == 'a':
+            print("avoid_left")
+            # with config.action_lock: config.shared_action = "avoid_left"
+        elif key == 'b':
+            print("avoid_right")
+            # with config.action_lock: config.shared_action = "avoid_right"
+        elif key == 'l':
+            print("left")
+        elif key == 'r':
+            print("right")
+        elif key == 't':
+            print("traffic_light")
+        elif key == 's':
+            print("stop")
+        elif key == 'q':
+            print("None")
+            # with config.action_lock: config.shared_action = None
 
-        # 7번 과정: 5번 과정 + 6번 과정을 종합하여 차량의 동작 상태를 결정함
-        if config.shared_action == None:
-            runtime.gpio.motor(30, 1, 1)
-            runtime.gpio.servo(angle)   
-        elif config.shared_action == "avoid_left":
-            pass
-        elif config.shared_action == "avoid_right":
-            pass
-        elif config.shared_action == "stop":
-            runtime.gpio.motor(0,1,1)
+        # 제어 로직
+        if key is None or key == 'q':
+            runtime.gpio.motor(50, 1, 1)
+            runtime.gpio.servo(angle)
+        elif key == 's' or key == 't':
+            runtime.gpio.motor(0, 1, 1)
             runtime.gpio.servo(90)
             time.sleep(3)
-        elif config.shared_action == "traffic_light_red":
-            pass
-        elif config.shared_action == "traffic_light_green":
-            pass
-        elif config.shared_action == "left": # left에서 일정한 크기 이상의 바운딩 박스를 발견하면 왼쪽으로 
-            runtime.gpio.motor(30, 1, 1)
-            runtime.gpio.servo(30)
-            time.sleep(2)
-        elif config.shared_action =="right": # right에서 일정한 크기 이상의 바운딩 박스를 발견하면 오른쪽으로
-            runtime.gpio.motor(30,1,1)
-            runtime.gpio.servo(150)
-            time.sleep(2)
-            
+        elif key == 'l':
+            runtime.gpio.motor(50, 1, 1)
+            runtime.gpio.servo(20)
+            time.sleep(5)
+        elif key == 'r':
+            runtime.gpio.motor(50, 1, 1)
+            runtime.gpio.servo(160)
+            time.sleep(5)
+        # 'a','b','q'는 pass 그대로
+
+        time.sleep(0.2)  # ✅ 과열 방지용
 
 except KeyboardInterrupt: 
     print("사용자 종료")
@@ -116,3 +127,10 @@ finally:
 # 회피 코드 
 # PID 제어
 # 정지 코드
+
+"""
+모자란 부분
+이미지 전처리: 노이즈 제거
+
+
+"""
