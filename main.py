@@ -6,8 +6,7 @@ import threading
 import time
 import vision
 import numpy as np
-import datetime
-import os
+import keyboard
 
 # main을 위한 초기화
 runtime.gpio.init()
@@ -28,6 +27,15 @@ time.sleep(3)
 # 사진 저장 
 #save_dir = "captured_frames"
 #os.makedirs(save_dir, exist_ok=True)  # 폴더 없으면 생성
+
+config.shared_action = None
+
+def set_action(val):
+    with config.action_lock:
+        config.shared_action = val
+    print(f"acation = {val}")
+
+
 
 try :
     while True :
@@ -59,11 +67,40 @@ try :
         # 6번 과정: YOLO_thread로 처리한 상태를 읽음
 #        with config.action_lock:
 #            action = config.shared_action   # YOLO 쓰레드가 쓴 최신값을 읽음
-        
-        # 7번 과정: 5번 과정 + 6번 과정을 종합하여 차량의 동작 상태를 결정함
-        runtime.gpio.motor(20, 1, 1)
-        runtime.gpio.servo(angle)   
+        # 현재는 가상 상태 -> 상태를 결정
+        keyboard.on_press_key('a', lambda e: set_action("avoid_left"))
+        keyboard.on_press_key('b', lambda e: set_action("avoid_right"))        
+        keyboard.on_press_key('s', lambda e: set_action("stop"))
+        keyboard.on_press_key('t', lambda e: set_action("traffic_light"))
+        keyboard.on_press_key('l', lambda e: set_action("left"))
+        keyboard.on_press_key('r', lambda e: set_action("right"))
+        keyboard.on_press_key('q', lambda e: set_action(None))
 
+        # 7번 과정: 5번 과정 + 6번 과정을 종합하여 차량의 동작 상태를 결정함
+        if config.shared_action == None:
+            runtime.gpio.motor(30, 1, 1)
+            runtime.gpio.servo(angle)   
+        elif config.shared_action == "avoid_left":
+            pass
+        elif config.shared_action == "avoid_right":
+            pass
+        elif config.shared_action == "stop":
+            runtime.gpio.motor(0,1,1)
+            runtime.gpio.servo(90)
+            time.sleep(3)
+        elif config.shared_action == "traffic_light_red":
+            pass
+        elif config.shared_action == "traffic_light_green":
+            pass
+        elif config.shared_action == "left": # left에서 일정한 크기 이상의 바운딩 박스를 발견하면 왼쪽으로 
+            runtime.gpio.motor(30, 1, 1)
+            runtime.gpio.servo(30)
+            time.sleep(2)
+        elif config.shared_action =="right": # right에서 일정한 크기 이상의 바운딩 박스를 발견하면 오른쪽으로
+            runtime.gpio.motor(30,1,1)
+            runtime.gpio.servo(150)
+            time.sleep(2)
+            
 
 except KeyboardInterrupt: 
     print("사용자 종료")
