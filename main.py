@@ -22,34 +22,20 @@ print("Flask 서버가 백그라운드에서 실행 중입니다.")
 
 #yolo_thread = threading.Thread(target=vision.cnn.yolo_inference_loop, daemon=True)
 #yolo_thread.start()
-#print("yolo가 백그라운드에서 실행 중입니다.")
+print("yolo가 백그라운드에서 실행 중입니다.")
+time.sleep(3)
 
 # 사진 저장 
-save_dir = "captured_frames"
-os.makedirs(save_dir, exist_ok=True)  # 폴더 없으면 생성
+#save_dir = "captured_frames"
+#os.makedirs(save_dir, exist_ok=True)  # 폴더 없으면 생성
 
 try :
     while True :
         # 1번 과정: 카메라로부터 프레임을 가져옴
         frame = runtime.camera.get_image()
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2RGB)        
-        if frame is None:
-            print("❌ 프레임 없음, 저장 안 함")
-        else:
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-            filename = f"frame_{timestamp}.jpg"
-            filepath = os.path.join(save_dir, filename)
-
-            ok = cv2.imwrite(filepath, frame)
-            if ok:
-                print(f"✅ 이미지 저장 완료: {filename}")
-            else:
-                print(f"❌ 이미지 저장 실패: {filename}")
-
-        time.sleep(0.3)       
         runtime.flask_server.current_frame = frame
 
-        # 1-plus 과정: BEV
+        # 1-plus 과정: BEV -> 이것을 좀 조정하면 좋을듯
         bev = vision.cv_module.origin_to_bev(frame)
         
         # 2번 과정: 프레임을 그레이스케일로 변환
@@ -58,39 +44,27 @@ try :
         # 3번 과정: 그레이스케일에서 canny 엣지 검출     
         canny = vision.cv_module.gray_to_canny(gray, threshold=175)
         
-        # 4번 과정: 허프 변환으로 직선 검출
+        # 4번 과정: 허프 변환으로 직선 검출 -> 지금은 허프만 라인을 제대로 활용하고 있지 못함
         lines = vision.cv_module.edges_to_lines(canny, minLineLength=30, maxLineGap=30)
         processed_frame = vision.cv_module.draw_lines(canny, lines, color = (0,255,0), thickness=2) # 실제 주행에서는 사용 X, Flask 서버에 전달할 프레임
         if len(processed_frame.shape) == 2:  # 흑백이면
             processed_frame = cv2.cvtColor(processed_frame, cv2.COLOR_GRAY2BGR)
         runtime.flask_server.processed_frame = canny
 
-        # 배터리 확인 -------------------------------
-        #battery_status = runtime.gpio.battery()
-        #print(battery_status)
-        # ------------------------------------------
-
-        # center_x = vision.cv_module.get_center_from_lines(lines, 380)
-        # angle = vision.cv_module.get_motor_angle(center_x) 
-        #print("angle: ", angle)
-        #runtime.gpio.motor(30, 1, 1)
-        #runtime.gpio.servo(angle)
-        #white_x_positions = []
+        # 5번 과정: canny로부터 중심과 대응하는 각도를 얻음
         get_center_from_canny = vision.cv_module.get_center_from_canny(canny, y = 300)
         angle = vision.cv_module.get_motor_angle(get_center_from_canny, 640)
-        #print('center:', get_center_from_canny)
         print('angle: ', angle)
-        runtime.gpio.motor(20, 1, 1)
-        runtime.gpio.servo(angle)   
-        # 지금 해야할 일: YOLO 모델을 이용한 객체 인식 -> 회피 코드, 정지 코드 작성
-        # 지금 해야할 일: angle을 PID제어 과정 추가
+        
+        # 6번 과정: YOLO_thread로 처리한 상태를 읽음
 #        with config.action_lock:
 #            action = config.shared_action   # YOLO 쓰레드가 쓴 최신값을 읽음
-
-#        print("action:", action)
-#        if action == "avoid":
-#            runtime.gpio.servo(30)
         
+        # 7번 과정: 5번 과정 + 6번 과정을 종합하여 차량의 동작 상태를 결정함
+        runtime.gpio.motor(20, 1, 1)
+        runtime.gpio.servo(angle)   
+
+
 except KeyboardInterrupt: 
     print("사용자 종료")
 
@@ -100,3 +74,8 @@ finally:
     time.sleep(1)
     runtime.gpio.stop_all()
     runtime.camera.release_camera()
+
+# YOLO 추론 사이즈 
+# 회피 코드 
+# PID 제어
+# 정지 코드

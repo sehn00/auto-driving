@@ -108,3 +108,30 @@ while True:
         break
 
 cv2.destroyAllWindows()
+
+
+"""
+사진 저장 코드
+        frame = runtime.camera.get_image()
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2RGB)        
+        if frame is None:
+            print("❌ 프레임 없음, 저장 안 함")
+        else:
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            filename = f"frame_{timestamp}.jpg"
+            filepath = os.path.join(save_dir, filename)
+
+            ok = cv2.imwrite(filepath, frame)
+            if ok:
+                print(f"✅ 이미지 저장 완료: {filename}")
+            else:
+                print(f"❌ 이미지 저장 실패: {filename}")
+
+        time.sleep(0.3)       
+
+
+
+
+
+
+"""
