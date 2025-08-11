@@ -48,23 +48,11 @@ def gray_to_canny(gray, threshold=175):
     edges = cv2.Canny(morphed, 40, 120, apertureSize=3) # sobel = 3x3
     return edges
 
-def edges_to_lines(edges, minLineLength=0, maxLineGap=65):
-    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=50, minLineLength=minLineLength, maxLineGap=maxLineGap)
-    return lines
-
-def draw_lines(frame, lines, color = (0,255,0), thickness=2):
-    hough_img = np.zeros_like(frame)
-    if len(frame.shape) == 2:
-        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-    if lines is not None:
-        for line in lines:
-            x1, y1, x2, y2 = line[0]
-            cv2.line(hough_img, (x1,y1),(x2,y2), color, thickness)
-    return hough_img
-
-def get_center_from_lines(lines, y=190):
+## 이거고치면됨 ##
+def get_center_from_canny(lines, y=190):
     if lines is None or len(lines) == 0:
-        return None
+        print('line 검출 실패')
+        return 320
 
     x_candidates = []
     # ✅ N×1×4 또는 N×4 형태 모두 안전하게 처리
@@ -81,6 +69,7 @@ def get_center_from_lines(lines, y=190):
         center_x = int(np.mean(x_candidates))
         return center_x
     else:
+        print('후보 없음')
         return 320  # 후보가 없을 경우 중앙값 기본 반환
 
 def get_motor_angle(center_x, img_width=640): # 아직, PID로 변환하는 과정은 없음

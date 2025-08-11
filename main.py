@@ -9,7 +9,7 @@ from collections import deque
 # main을 위한 초기화
 runtime.gpio.init()
 runtime.gpio.servo(90)
-time.sleep(1)
+time.sleep(3)
 runtime.camera.init(640,480,30)
 
 # Flask 서버를 백그라운드에서 실행
@@ -23,7 +23,6 @@ print("yolo가 백그라운드에서 실행 중입니다.")
 
 # 변수 초기화
 runtime.config.shared_action = None
-hist = deque(maxlen=5) # 최근 N프레임의 차선 중심 좌표를 기억해서 평균 내어 PID 입력을 부드럽게 만드는 버퍼
 
 try :
     while True :
@@ -40,30 +39,18 @@ try :
 
         # 3번 과정: 그레이스케일에서 canny 엣지 검출     
         canny = vision.cv_module.gray_to_canny(gray)
-        
-        # 4번 과정: 허프 변환으로 직선 검출
-        lines = vision.cv_module.edges_to_lines(canny)
-        processed_frame = vision.cv_module.draw_lines(canny, lines, color = (0,255,0), thickness=2) # 실제 주행에서는 사용 X, Flask 서버에 전달할 프레임
-        if len(processed_frame.shape) == 2:  # 흑백이면
-            processed_frame = cv2.cvtColor(processed_frame, cv2.COLOR_GRAY2RGB)
-        runtime.flask_server.processed_frame = processed_frame
-
-        # 5번 과정: 허프 변환과 스무딩으로부터 중심과 대응하는 각도를 얻음
-        get_center_from_lines = vision.cv_module.get_center_from_lines(lines, y = 190)
-        hist.append(get_center_from_lines) # 스무딩을 위한 hist
-        if len(hist) >= 4:
-            center_smooth = sum(hist)/ len(hist)
-        else :
-            center_smooth = get_center_from_lines
-        
-        angle = vision.cv_module.get_motor_angle(center_smooth, 640)    
-        
+        runtime.flask_server.processed_frame = canny
+        get_center_from_canny = vision.cv_module.get_center_from_canny(canny, y = 380)
+        angle = vision.cv_module.get_motor_angle(get_center_from_canny, 640)    
+        print('get_center_from_canny', get_center_from_canny)
+        print('angle', angle)
         # 6번 과정: YOLO_thread로 처리한 상태를 읽음
         with runtime.config.action_lock:
             action = runtime.config.shared_action   # YOLO 쓰레드가 쓴 최신값을 읽음
 
         match action:
             case runtime.config.YOLO_label.car:
+                print(car)
                 pass
             case runtime.config.YOLO_label.stop:
                 runtime.gpio.motor(0,1,1)
