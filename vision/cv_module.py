@@ -48,40 +48,84 @@ def gray_to_canny(gray, threshold=175):
     edges = cv2.Canny(morphed, 40, 120, apertureSize=3) # sobel = 3x3
     return edges
 
-def edges_to_lines(edges, minLineLength=0, maxLineGap=65):
-    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=50, minLineLength=minLineLength, maxLineGap=maxLineGap)
-    return lines
+# def edges_to_lines(edges, minLineLength=0, maxLineGap=65):
+#     lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=50, minLineLength=minLineLength, maxLineGap=maxLineGap)
+#     return lines
 
-def draw_lines(frame, lines, color = (0,255,0), thickness=2):
-    hough_img = np.zeros_like(frame)
-    if len(frame.shape) == 2:
-        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-    if lines is not None:
-        for line in lines:
-            x1, y1, x2, y2 = line[0]
-            cv2.line(hough_img, (x1,y1),(x2,y2), color, thickness)
-    return hough_img
+# def draw_lines(frame, lines, color = (0,255,0), thickness=2):
+#     hough_img = np.zeros_like(frame)
+#     if len(frame.shape) == 2:
+#         frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
+#     if lines is not None:
+#         for line in lines:
+#             x1, y1, x2, y2 = line[0]
+#             cv2.line(hough_img, (x1,y1),(x2,y2), color, thickness)
+#     return hough_img
 
-def get_center_from_lines(lines, y=190):
-    if lines is None or len(lines) == 0:
+
+def get_center_from_canny(edges, y=190, min_cluster_gap=15):
+    """
+    edges: gray_to_canny() 결과(0/255) 이미지
+    y: 스캔할 가로줄
+    min_cluster_gap: 같은 에지로 묶을 연속성 기준(픽셀). 10~25 정도에서 튜닝.
+    return: center_x (두 차선 사이 중점) or None
+    """
+    h, w = edges.shape[:2]
+    if y < 0 or y >= h:
+        raise ValueError(f"y={y} 가 유효 범위를 벗어남(0~{h-1})")
+
+    xs = np.where(edges[y] == 255)[0]
+    if xs.size < 2:
+        return None  # 에지가 최소 2개는 있어야 중점을 정의할 수 있음
+
+    # 1) 연속(또는 거의 연속)한 흰 픽셀들을 하나의 클러스터로 묶기
+    clusters = []
+    start = xs[0]
+    prev = xs[0]
+    for x in xs[1:]:
+        if x - prev > min_cluster_gap:
+            clusters.append((start, prev))  # [start, prev]를 하나의 에지 묶음으로
+            start = x
+        prev = x
+    clusters.append((start, prev))
+
+    # 각 클러스터의 대표 x(중심) 구하기
+    centers = [ (s + e) // 2 for (s, e) in clusters ]
+
+    # 2) 선택 로직
+    #   - 에지가 2개 이상 잡히면 0번째와 -1번째 사용
+    if len(centers) >= 2:
+        x1, x2 = centers[0], centers[-1]
+    else:
         return None
 
-    x_candidates = []
-    # ✅ N×1×4 또는 N×4 형태 모두 안전하게 처리
-    for x1, y1, x2, y2 in lines.reshape(-1, 4):
-        # y를 선분이 통과하면
-        if (y1 - y) * (y2 - y) <= 0:
-            if y2 != y1:  # 기울어진 선
-                x_at_y = x1 + (y - y1) * (x2 - x1) / (y2 - y1)
-                x_candidates.append(int(x_at_y))
-            elif y1 == y2 == y:  # 수평선
-                x_candidates.extend([x1, x2])
+    # 3) 두 에지의 중점 반환
+    center_x = (x1 + x2) // 2
+    return center_x
 
-    if x_candidates:
-        center_x = int(np.mean(x_candidates))
-        return center_x
-    else:
-        return 320  # 후보가 없을 경우 중앙값 기본 반환
+
+
+
+# def get_center_from_lines(lines, y=190):
+#     if lines is None or len(lines) == 0:
+#         return None
+
+#     x_candidates = []
+#     # ✅ N×1×4 또는 N×4 형태 모두 안전하게 처리
+#     for x1, y1, x2, y2 in lines.reshape(-1, 4):
+#         # y를 선분이 통과하면
+#         if (y1 - y) * (y2 - y) <= 0:
+#             if y2 != y1:  # 기울어진 선
+#                 x_at_y = x1 + (y - y1) * (x2 - x1) / (y2 - y1)
+#                 x_candidates.append(int(x_at_y))
+#             elif y1 == y2 == y:  # 수평선
+#                 x_candidates.extend([x1, x2])
+
+#     if x_candidates:
+#         center_x = int(np.mean(x_candidates))
+#         return center_x
+#     else:
+#         return 320  # 후보가 없을 경우 중앙값 기본 반환
 
 def get_motor_angle(center_x, img_width=640): # 아직, PID로 변환하는 과정은 없음
     # x좌표를 0~180도로 매핑
@@ -90,3 +134,5 @@ def get_motor_angle(center_x, img_width=640): # 아직, PID로 변환하는 과�
     angle = int(center_x * 180 / img_width)
     angle = int(max(0, min(180, angle))) # 0~180도 범위 제한
     return angle
+
+
