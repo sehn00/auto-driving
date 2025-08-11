@@ -1,0 +1,10 @@
+names:
+- car
+- left
+- red
+- right
+- stop
+nc: 5
+test: test/images
+train: train\images
+val: valid/images
