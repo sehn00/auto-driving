@@ -3,7 +3,11 @@ import numpy as np
 
 # 이미지 파일 경로
 <<<<<<< HEAD
+<<<<<<< HEAD
 image_path = 'test_pic_1.jpg'    # 상대경로 (pwd: E:\dev_in_E\git-clones-E\auto_driving> )
+=======
+image_path = 'test_pic_2.jpg'    # 상대경로 (pwd: E:\dev_in_E\git-clones-E\auto_driving> )
+>>>>>>> d1a56db87aa80bb15a504a53cc907a22c40e7002
 # test_pic_1.jpg / test_pic_2.jpg / image_of_test.PNG
 
 frame = cv2.imread(image_path)
@@ -57,6 +61,7 @@ for name in ['original_image', 'hough_lines_only', 'original_with_lines', 'proce
     cv2.namedWindow(name, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(name, 640, 480)
 
+
 while True:
 <<<<<<< HEAD
     # 트랙바에서 값 읽기
@@ -66,6 +71,65 @@ while True:
     us = cv2.getTrackbarPos('upper_S', 'upper_white')   # upper_S = 얼마나 채도가 낮아야 흰색으로 볼 것인가
     lower_white = np.array([0, ls, lv])
     upper_white = np.array([180, us, 255])
+
+    # 추가 4. 흰색&검은색만 남기기 ---------------------------------------------------
+    hsv_full = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    # 흰색 범위 (채도 낮고, 밝기 높음)
+    lower_white_full = np.array([0, 0, 180])
+    upper_white_full = np.array([180, 40, 255])
+    mask_white_only = cv2.inRange(hsv_full, lower_white_full, upper_white_full)
+
+    # 검은색 범위 (밝기 낮음)
+    lower_black_full = np.array([0, 0, 0])
+    upper_black_full = np.array([180, 255, 50])
+    mask_black_only = cv2.inRange(hsv_full, lower_black_full, upper_black_full)
+
+    # 흰색 + 검은색 마스크 합치기
+    mask_wb = cv2.bitwise_or(mask_white_only, mask_black_only)
+
+    # 마스크 적용
+    frame = cv2.bitwise_and(frame, frame, mask=mask_wb)
+    # -----------------------------------------------------------------------------
+
+    # 추가 4. 흰/검만 남기는 전처리 (Lab 기반, 극단 필터) -------------------------------
+    # lab = cv2.cvtColor(frame, cv2.COLOR_BGR2Lab)
+    # L, A, B = cv2.split(lab)
+
+    # # 무채색(그레이/흰/검): a,b가 128 근처
+    # ta, tb = 10, 10            # a,b 허용 범위(작을수록 더 극단)
+    # mask_a = cv2.inRange(A, 128 - ta, 128 + ta)
+    # mask_b = cv2.inRange(B, 128 - tb, 128 + tb)
+    # mask_neutral = cv2.bitwise_and(mask_a, mask_b)
+
+    # # 밝기 기준으로 흰/검 분리
+    # L_white_min = 200          # 높일수록 더 순백만 통과
+    # L_black_max = 60           # 낮출수록 더 순흑만 통과
+    # mask_white = cv2.inRange(L, L_white_min, 255)
+    # mask_black = cv2.inRange(L, 0, L_black_max)
+
+    # # 무채색 조건과 AND
+    # mask_white = cv2.bitwise_and(mask_white, mask_neutral)
+    # mask_black = cv2.bitwise_and(mask_black, mask_neutral)
+
+    # # 최종: 흰 + 검만 남김
+    # mask_wb = cv2.bitwise_or(mask_white, mask_black)
+
+    # # (선택) 작은 점 제거
+    # # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    # # mask_wb = cv2.morphologyEx(mask_wb, cv2.MORPH_OPEN, kernel, iterations=1)
+
+    # # 원본 프레임에 마스크 적용 → 나머지 색 전부 제거
+    # frame = cv2.bitwise_and(frame, frame, mask=mask_wb)
+
+    # # 두 톤으로 보고 싶으면(디버깅용):
+    # # result = np.zeros_like(frame)
+    # # result[mask_white > 0] = (255, 255, 255)
+    # # result[mask_black > 0] = (0, 0, 0)
+    # # cv2.imshow('wb_only', result)
+    # ----------------------------------------------------------------------------
+
+
 
     # 1. HSV 마스킹 및 gray 변환
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
