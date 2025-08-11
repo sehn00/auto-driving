@@ -1,10 +1,6 @@
 import cv2
 import numpy as np
 
-#lower_white= np.array([0,0,120])
-#upper_white = np.array([180,50,255])
-
-
 # PID 제어 변수 (전역)
 pid_last_error = 0
 pid_integral = 0
@@ -31,23 +27,29 @@ def origin_to_bev(frame):
     
     return warped_image
 
-def origin_to_gray(frame, lower_white=np.array([0,0,180]), upper_white=np.array([180,28,255])) :
+def origin_to_gray(frame, lower_white=np.array([0,0,196]), upper_white=np.array([180,28,255])) :
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGRA2RGB)    # BGRA -> RGB
     hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
     mask = cv2.inRange(hsv, lower_white, upper_white)   # 흰색범위 지정한 마스크 생성
     mask_white = cv2.bitwise_and(frame, frame, mask=mask)   # 원본 이미지에 마스크 적용, 흰색 영역만 남김
     gray = cv2.cvtColor(mask_white, cv2.COLOR_BGR2GRAY) # 그레이스케일
+    gray = cv2.medianBlur(gray, 3) # 미디언 블러 (반사광 억제)
+    kernel_size = 7  # 차선 두께보다 약간 작은 크기로 조정
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
+    tophat = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel)
+    gray = cv2.subtract(gray, tophat) # 반사광 억제: 원본 gray에서 tophat 결과 빼기
+
     return gray
 
 def gray_to_canny(gray, threshold=175):
     _, binary = cv2.threshold(gray, threshold, 255, cv2.THRESH_BINARY)
     kernel = np.ones((5, 5), np.uint8)
     morphed = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
-    edges = cv2.Canny(morphed, 40, 120, apertureSize=3)
+    edges = cv2.Canny(morphed, 40, 120, apertureSize=3) # sobel = 3x3
     return edges
 
-def edges_to_lines(edges, minLineLength=30, maxLineGap=30):
-    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=80, minLineLength=minLineLength, maxLineGap=maxLineGap)
+def edges_to_lines(edges, minLineLength=0, maxLineGap=65):
+    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=50, minLineLength=minLineLength, maxLineGap=maxLineGap)
     return lines
 
 def draw_lines(frame, lines, color = (0,255,0), thickness=2):
@@ -88,26 +90,3 @@ def get_motor_angle(center_x, img_width=640): # 아직, PID로 변환하는 과�
     angle = int(center_x * 180 / img_width)
     angle = int(max(0, min(180, angle))) # 0~180도 범위 제한
     return angle
-
-
-def get_center_from_canny(canny_img, y=380):
-    """
-    Canny 이미지에서 특정 y좌표의 흰 픽셀의 x좌표 중심을 계산
-    :param canny_img: Canny edge 이미지 (2D numpy array)
-    :param y: 중심을 계산할 y 좌표 (default: 380)
-    :return: 중심 x 좌표 (없으면 None)
-    """
-    if y >= canny_img.shape[0]:
-        print(f"❌ y={y}는 이미지 높이({canny_img.shape[0]})를 벗어났습니다.")
-        return None
-
-    # 해당 y 좌표 라인의 모든 x 좌표에서 픽셀 값이 255인 (즉 흰색인) 위치 탐색
-    white_x_positions = np.where(canny_img[y] == 255)[0]  # [0] 붙이면 x 좌표 배열만 반환
-    white_x_list = white_x_positions.tolist()
-    if len(white_x_positions) == 0:
-        return None  # 중심 못 찾음
-
-    center_x = int(np.mean(white_x_positions))
-    return center_x
-
-
