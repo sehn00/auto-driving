@@ -15,11 +15,11 @@ runtime.camera.init(640,480,30)
 # Flask 서버를 백그라운드에서 실행
 server_thread = threading.Thread(target=runtime.flask_server.start_server, daemon=True)
 server_thread.start()
-print("Flask 서버가 백그라운드에서 실행 중입니다.")
+print("Flask 서버가 백그라운드에서 실행 중입니다!")
 
 yolo_thread = threading.Thread(target=vision.cnn.yolo_inference_loop, daemon=True)
 yolo_thread.start()
-print("yolo가 백그라운드에서 실행 중입니다.")
+print("yolo가 백그라운드에서 실행 중입니다!")
 
 # 변수 초기화
 runtime.config.shared_action = None
