@@ -64,100 +64,10 @@ class YOLO_label(Enum):
 # PID_OUT_LIM = (-20, 20)    # steer(deg) 제한
 # PID_D_ALPHA = 0.15         # D항 LPF 계수
 
-<<<<<<< HEAD
-PID_KP = 0.9
-PID_KI = 0.0
-PID_KD = 0.12
-PID_OUT_LIM = (-20, 20)    # steer(deg) 제한
-PID_D_ALPHA = 0.15         # D항 LPF 계수
-
-DT_MIN = 1e-3 # dt 하한
-DT_MAX = 0.05 # dt 상한 (50ms)
-LOST_TIMEOUT_S = 0.6 # 미검출 지속 시 중앙 복귀 시작 시간
-SERVO_RATE_DEG_PER_STEP = 5 # 서보 명령 한 주기 당 최대 변화량 (deg)
-
-# 차선 중심 Cx의 EMA 스무딩 계수 (0~1). 클수록 최신값 가중 ↑
-CX_SMOOTH_ALPHA = 0.25
-
-pid = PID(PID_KP, PID_KI, PID_KD, out_lim=PID_OUT_LIM, d_alpha=PID_D_ALPHA)
-prev_time = time.monotonic()  # 첫 호출 기준시간
-Cx_smooth = None              # EMA 상태 (픽셀 초기 None)
-last_servo_cmd = 90           # 직진 기준 90으로 시작(초기값)
-last_seen_time = time.monotonic()  # 마지막 유효 Cx 관측 시각
-
-def _rate_limit(prev, target, limit):
-    if target > prev + limit:
-        return prev + limit
-    if target < prev - limit:
-        return prev - limit
-    return target
-
-def pid_steer_from_center(Cx, width=640):
-    """
-    Cx: 검출된 차선 중심 x (픽셀) 또는 None
-    width: 프레임 폭 (픽셀)
-    return: 서보 명령 각도 [0, 180] (정수)
-    """
-    global prev_time, Cx_smooth, last_servo_cmd, last_seen_time
-    
-    with action_lock:
-        now = time.monotonic()
-        raw_dt = now - prev_time
-        prev_time = now
-        
-    if raw_dt <= 0:
-        return last_servo_cmd
-    
-    dt = float(np.clip(raw_dt, DT_MIN, DT_MAX))
-    
-    if width <= 0:
-        return last_servo_cmd
-
-    # Cx 스무딩 (EMA). 최초엔 측정값을 바로 채택.
-    if Cx is not None:
-        last_seen_time = now 
-        if Cx_smooth is None:
-            Cx_smooth = float(Cx)
-        else:
-            Cx_smooth = (1 - CX_SMOOTH_ALPHA) * Cx_smooth + CX_SMOOTH_ALPHA * float(Cx)
-    else:
-        # 미검출시 마지막 서보 명령 유지 (혹은 별도 정책: 완만히 중앙 복귀 등)
-        if (now - last_seen_time) > LOST_TIMEOUT_S:
-            target_cmd = 90
-            last_servo_cmd = int(_rate_limit(last_servo_cmd, target_cmd, SERVO_RATE_DEG_PER_STEP))
-            return last_servo_cmd
-        return last_servo_cmd
-            
-    # 에러: (화면중앙 - 차선중앙). [-1, 1] 정규화
-    img_center = 0.5 * width
-    e = (img_center - Cx_smooth) / (0.5 * width)
-    
-    if raw_dt >= 0.2:
-        pid.reset()
-        
-    # PID로 deg 계산 → 서보 기준 각도로 변환 (직진=90)
-    steer = pid.step(e, dt)  # [-20, 20]
-    target_cmd = int(np.clip(90 + steer, 0, 180))
-    
-    servo_cmd = int(_rate_limit(last_servo_cmd, target_cmd, SERVO_RATE_DEG_PER_STEP))
-    
-    last_servo_cmd = servo_cmd
-    return servo_cmd
-
-
-"""
-def pid_steer_from_center(Cx, width = 640):
-    # Cx: 검출된 차선 중심 x(픽셀). width: 프레임 폭.
-    global prev_time
-    now = time.monotonic()
-    dt = now - prev_time
-    prev_time = now
-=======
 # DT_MIN = 1e-3 # dt 하한
 # DT_MAX = 0.05 # dt 상한 (50ms)
 # LOST_TIMEOUT_S = 0.6 # 미검출 지속 시 중앙 복귀 시작 시간
 # SERVO_RATE_DEG_PER_STEP = 5 # 서보 명령 한 주기 당 최대 변화량 (deg)
->>>>>>> 465e30d (PID 제어 구현)
 
 # # 차선 중심 Cx의 EMA 스무딩 계수 (0~1). 클수록 최신값 가중 ↑
 # CX_SMOOTH_ALPHA = 0.25
@@ -196,12 +106,6 @@ def pid_steer_from_center(Cx, width = 640):
 #     if width <= 0:
 #         return last_servo_cmd
 
-<<<<<<< HEAD
-    # (서보가 90이 직진인 경우)
-    servo_cmd = int(np.clip(90 + steer, 0, 180))
-    return servo_cmd
-"""
-=======
 #     # Cx 스무딩 (EMA). 최초엔 측정값을 바로 채택.
 #     if Cx is not None:
 #         last_seen_time = now 
@@ -230,4 +134,3 @@ def pid_steer_from_center(Cx, width = 640):
 #     servo_cmd = int(_rate_limit(last_servo_cmd, target_cmd, SERVO_RATE_DEG_PER_STEP)) # 한 번에 최대 5도 이상 이동하지 못하게
 #     last_servo_cmd = servo_cmd # servo 업데이트
 #     return servo_cmd
->>>>>>> 465e30d (PID 제어 구현)
