@@ -42,7 +42,7 @@ def get_center_from_canny(edges, min_cluster_gap=15):
     """
     h, w = edges.shape[:2]
 
-    # 스캔할 y좌표들을 이미지 높이의 70% ~ 90% 사이에서 5개 선택합니다.
+    # 스캔할 y좌표들을 이미지 높이의 65% ~ 85% 사이에서 5개 선택합니다.
     # 이 범위는 주행 환경에 따라 조절할 수 있습니다.
     scan_ys = np.linspace(int(h * 0.7), int(h * 0.9), num=5, dtype=int)
     
