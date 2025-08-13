@@ -153,7 +153,7 @@ try:
         # if time.time() - start_time <= 7:  # 이것도 새벽에 고쳤음!!!!! 까먹지말기
         if now - start_time <= 15:
             runtime.gpio.motor(35, 1, 1)
-        elif now - start_time <= 20
+        elif now - start_time <= 20:
 		        runtime.gpio.motor(75, 1, 1)
         else:
             runtime.gpio.motor(35, 1, 1)

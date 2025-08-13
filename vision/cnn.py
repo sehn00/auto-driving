@@ -6,14 +6,17 @@ model = YOLO("datasets/runs/detect/train/weights/best.pt") # 학습 시킨 모�
 
 def _detect_class_id(frame):
     try:
+        # 안전장치 코드
         if frame is None:
             return [], 0.0  
 
         if frame.ndim == 3 and frame.shape[2] == 4:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
 
+        # 메인 추론 코드
         start = time.time()
-        result = model(frame, imgsz=320, conf=0.2, iou=0.5, verbose=False)[0]   # 200 -> 320 으로 변경
+        result = model(frame, imgsz=416, conf=0.3, iou=0.5, verbose=False)[0]   # 200 -> 416 으로 변경
+        # 신뢰도 0.2 -> 0.15 낮춤
         print(result.boxes.conf.tolist()) # conf 출력
         print(f"YOLO 결과 load 시간: {time.time() - start:.4f}초")
 

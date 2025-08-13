@@ -50,16 +50,16 @@ class PID:
 
 
 # ===== 파라미터 =====
-PID_KP = 100        # 오차 크기에 대한 반응 강도 조절(조향 각도 결정), 초기값 0.9
+PID_KP = 150        # 오차 크기에 대한 반응 강도 조절(조향 각도 결정), 초기값 0.9
 PID_KI = 0.0       # 0.0
 PID_KD = 3.0       # 반응 속도 조절, 클 수록 반응속도 빠름, 초기값 0.12
-PID_OUT_LIM = (-120, 120)     # (-25, 25)
+PID_OUT_LIM = (-150, 150)     # (-25, 25)
 PID_D_ALPHA = 0.15
 
 DT_MIN = 1e-3
 DT_MAX = 0.05
 LOST_TIMEOUT_S = 0.6
-SERVO_RATE_DEG_PER_STEP = 5
+SERVO_RATE_DEG_PER_STEP = 5     # 서보 명령 한 주기 당 최대 변화각
 
 CX_SMOOTH_ALPHA = 0.25
 
