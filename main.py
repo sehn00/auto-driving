@@ -133,9 +133,9 @@ try:
                     # runtime.gpio.motor(0, 1, 1)
                     # time.sleep(10)    # 10초간 정지
                     
-                    continue    # 현재 루프의 나머지 부분 건너뛰기 (명령 충돌 방지용)
+                    continue    # 현재 루프의 나머git push origin main --force-with-lease지 부분 건너뛰기 (명령 충돌 방지용)
 
-                case runtime.config.YOLO_label.left:
+                case runtime.config.YOSLO_label.left:
                     print("YOLO 예측값: left")
                     runtime.gpio.servo(30)
                     runtime.gpio.motor(20, 1, 1)
