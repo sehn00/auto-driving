@@ -55,7 +55,7 @@ last_control_time = 0   # 마지막 제어 시간 기록
 try:
     start_time = time.monotonic()
     while True:
-        # 1번 과정: 카메라로부터 프레임을 가져옴
+        # 카메라로부터 프레임을 가져옴
         frame = runtime.camera.get_image()
         if frame is None:
             continue
@@ -69,9 +69,6 @@ try:
             runtime.gpio.motor(20, 1, 1)    # 회피 중 속도 20
             runtime.gpio.servo(turning_angle)   # 각도: 좌회전은 30 / 우회전은 150
             continue
-        # if current_time - last_control_time > CONTROL_INTERVAL:
-        #     last_control_time = current_time
-        # --- 아래 로직은 CONTROL_INTERVAL 마다 한 번씩만 실행됨 ---
 
         frame_1 = frame[frame.shape[0] // 2:, :] # 사진 조정 (하단 ROI)
 
@@ -95,7 +92,6 @@ try:
         ## YOLO 예측 읽기
         with runtime.config.action_lock:
             pred = runtime.config.shared_action # 최근에 감지한 액션 결과
-        
 
 
         if pred is None:
@@ -133,9 +129,9 @@ try:
                     # runtime.gpio.motor(0, 1, 1)
                     # time.sleep(10)    # 10초간 정지
                     
-                    continue    # 현재 루프의 나머git push origin main --force-with-lease지 부분 건너뛰기 (명령 충돌 방지용)
+                    continue    # 현재 루프의 나머지 부분 건너뛰기 (명령 충돌 방지용)
 
-                case runtime.config.YOSLO_label.left:
+                case runtime.config.YOLO_label.left:
                     print("YOLO 예측값: left")
                     runtime.gpio.servo(30)
                     runtime.gpio.motor(20, 1, 1)
@@ -146,15 +142,14 @@ try:
                     runtime.gpio.servo(150)
                     runtime.gpio.motor(20, 1, 1)
                     continue    # 현재 루프의 나머지 부분 건너뛰기 (명령 충돌 방지용)
-        # --------------------------------------------------
 
-        # 5번 과정: YOLO 객체 미탐지 시 continue되지 않고, 아래의 기본 주행 로직이 실행됨
+        # YOLO 객체 미탐지 시 continue되지 않고, 아래의 기본 주행 로직이 실행됨
         ## 10초가 지나면 속도 35 -> 75
-        # if time.time() - start_time <= 7:  # 이것도 새벽에 고쳤음!!!!! 까먹지말기
+        # if time.time() - start_time <= 7:
         if now - start_time <= 15:
             runtime.gpio.motor(35, 1, 1)
         elif now - start_time <= 20:
-		        runtime.gpio.motor(75, 1, 1)
+            runtime.gpio.motor(75, 1, 1)
         else:
             runtime.gpio.motor(35, 1, 1)
 
